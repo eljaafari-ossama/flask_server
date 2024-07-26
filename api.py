@@ -1,22 +1,19 @@
-from flask import Flask, jsonify, request
-import sqlite3
 import os
+import sqlite3
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Fonction pour se connecter à la base de données SQLite
 def get_db_connection():
-    db_path = os.getenv('DATABASE_PATH', 'C:/Users/HP/Documents/stage/REPORT_DATA1.db')
+    db_path = os.path.join(os.path.dirname(__file__), 'data', 'REPORT_DATA1.db')
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
-# Route principale
 @app.route('/')
 def index():
     return "Welcome to the Flask API"
 
-# Route pour récupérer les données les plus récentes
 @app.route('/latest', methods=['GET'])
 def get_latest_data():
     try:
@@ -32,7 +29,6 @@ def get_latest_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Route pour récupérer les données historiques
 @app.route('/historical', methods=['GET'])
 def get_historical_data():
     try:
@@ -45,7 +41,6 @@ def get_historical_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Route pour récupérer les données pour une date spécifique
 @app.route('/data_by_date', methods=['GET'])
 def get_data_by_date():
     date = request.args.get('date')
