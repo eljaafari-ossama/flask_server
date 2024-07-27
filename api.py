@@ -8,7 +8,8 @@ DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': '1234',
-    'database': 'report_database'
+    'database': 'report_database',
+    'port': 3306
 }
 
 # Connexion à la base de données
@@ -25,7 +26,6 @@ def row_to_dict(cursor, row):
 def welcome():
     return 'Welcome to the API!'
 
-# Route pour récupérer les données les plus récentes
 @app.route('/latest', methods=['GET'])
 def get_latest_data():
     try:
@@ -41,7 +41,6 @@ def get_latest_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Route pour récupérer les données historiques
 @app.route('/historical', methods=['GET'])
 def get_historical_data():
     try:
@@ -54,7 +53,6 @@ def get_historical_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Route pour récupérer les données pour une date spécifique
 @app.route('/data_by_date', methods=['GET'])
 def get_data_by_date():
     date = request.args.get('date')
