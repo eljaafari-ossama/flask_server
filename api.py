@@ -1,31 +1,22 @@
 from flask import Flask, jsonify, request
-import mysql.connector
+import sqlite3
+import os
 
 app = Flask(__name__)
 
-# Configuration de la base de données MySQL
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '1234',
-    'database': 'report_database',
-    'port': 3306
-}
-
-# Connexion à la base de données
+# Fonction pour se connecter à la base de données SQLite
 def get_db_connection():
-    conn = mysql.connector.connect(**DB_CONFIG)
+    db_path = os.getenv('DATABASE_PATH', 'C:/Users/HP/Documents/stage/REPORT_DATA1.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     return conn
 
-# Fonction pour convertir une ligne de données en dictionnaire
-def row_to_dict(cursor, row):
-    columns = [col[0] for col in cursor.description]
-    return dict(zip(columns, row))
+# Route principale
+@app.route('/')
+def index():
+    return "Welcome to the Flask API"
 
-@app.route('/', methods=['GET'])
-def welcome():
-    return 'Welcome to the API!'
-
+# Route pour récupérer les données les plus récentes
 @app.route('/latest', methods=['GET'])
 def get_latest_data():
     try:
@@ -35,12 +26,13 @@ def get_latest_data():
         latest_data = cursor.fetchone()
         conn.close()
         if latest_data:
-            return jsonify(row_to_dict(cursor, latest_data))
+            return jsonify(dict(latest_data))
         else:
             return jsonify({"error": "No data found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Route pour récupérer les données historiques
 @app.route('/historical', methods=['GET'])
 def get_historical_data():
     try:
@@ -49,10 +41,11 @@ def get_historical_data():
         cursor.execute("SELECT * FROM report_table")
         historical_data = cursor.fetchall()
         conn.close()
-        return jsonify([row_to_dict(cursor, row) for row in historical_data])
+        return jsonify([dict(row) for row in historical_data])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Route pour récupérer les données pour une date spécifique
 @app.route('/data_by_date', methods=['GET'])
 def get_data_by_date():
     date = request.args.get('date')
@@ -61,16 +54,16 @@ def get_data_by_date():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        query = "SELECT * FROM report_table WHERE DATE(date_temps) = %s"
+        query = "SELECT * FROM report_table WHERE DATE(date_temps) = ?"
         cursor.execute(query, (date,))
         data_by_date = cursor.fetchall()
         conn.close()
         if data_by_date:
-            return jsonify([row_to_dict(cursor, row) for row in data_by_date])
+            return jsonify([dict(row) for row in data_by_date])
         else:
             return jsonify({"error": "No data found for the specified date"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0')
